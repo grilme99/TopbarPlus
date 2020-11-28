@@ -25,23 +25,23 @@ declare interface Dropdown {
      * dropdown.set("backgroundColor", Color3.fromRGB(100, 100, 100))
      * ```
      */
-    set(setting: keyof IDropdownSettings, value: unknown): void
+    set: (setting: keyof IDropdownSettings, value: unknown) => void
 
     /**
      * Forces the dropdown to update colors and text alignment.
      * If the dropdown is visible when this is called, the dropdown
      * will be hidden.
      */
-    update(): void
+    update: () => void
 
     /** Hides the dropdown. */
-    hide(): void
+    hide: () => void
 
     /**
      * Displays the dropdown at the passed Vector2 position. If `position`
      * is not defined, the dropdown will appear automatically at the icon.
      */
-    show(position?: Vector2): void
+    show: (position?: Vector2) => void
 
     /**
      * Creates an option menu based on the given option details, and returns
@@ -51,16 +51,16 @@ declare interface Dropdown {
      * const updatedOption = dropdown.createOption(option)
      * ```
      */
-    createOption(option: IDropdownOption): IDropdownOption
+    createOption: (option: IDropdownOption) => IDropdownOption
 
     /** Destroys an option with the given name or index. */
-    removeOption(nameOrIndex: string | number): void
+    removeOption: (nameOrIndex: string | number) => void
 
     /**
      * Destroys all instances, connections and signals associated with
      * the dropdown.
      */
-    destroy(): void
+    destroy: () => void
 }
 
 declare interface DropdownConstructor {

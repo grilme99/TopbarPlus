@@ -1,3 +1,5 @@
+if (game:GetService('RunService'):IsServer()) then return true end
+
 -- LOCAL
 local starterGui = game:GetService("StarterGui")
 local guiService = game:GetService("GuiService")

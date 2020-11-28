@@ -10,9 +10,7 @@
 -- @classmod Maid
 -- @see Signal
 
-local replicatedStorage = game:GetService("ReplicatedStorage")
-local HDAdmin = replicatedStorage:WaitForChild("HDAdmin")
-local Promise = require(HDAdmin:WaitForChild("Promise"))
+local Promise = require(script.Parent:WaitForChild("Promise"))
 
 
 local Maid = {}

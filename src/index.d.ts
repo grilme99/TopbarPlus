@@ -1,3 +1,4 @@
-import TIconController from 'IconController'
+import TIconController from './IconController'
 
-export const IconController: typeof TIconController
+declare const TopbarPlus: typeof TIconController
+export = TopbarPlus

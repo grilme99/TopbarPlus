@@ -1,5 +1,5 @@
-import Dropdown from 'Dropdown'
-import { IDropdownOption, IThemeStructure } from 'types'
+import Dropdown from './Dropdown'
+import { IDropdownOption, IThemeStructure } from './types'
 
 declare interface Icon {
     // Properties

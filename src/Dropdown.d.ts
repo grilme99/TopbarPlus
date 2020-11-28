@@ -1,5 +1,5 @@
-import Icon from 'Icons'
-import { IDropdownOption, IDropdownSettings } from 'types'
+import Icon from './Icons'
+import { IDropdownOption, IDropdownSettings } from './types'
 
 declare interface Dropdown {
     // Properties

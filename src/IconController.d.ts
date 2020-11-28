@@ -1,5 +1,5 @@
-import Icon from 'Icons'
-import { IThemeStructure } from 'types'
+import Icon from './Icons'
+import { IThemeStructure } from './types'
 
 declare namespace IconController {
     /**

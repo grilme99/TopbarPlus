@@ -31,7 +31,7 @@ declare interface IconController {
      * it. The icon can be enabled and disabled by doing `icon:setEnabled(bool)` or
      * `StarterGui:SetCoreGuiEnabled("Chat", bool)`.
      */
-    createFakeChat(this: IconController): void
+    createFakeChat(this: IconController): Icon
 
     /**
      * Destroys and removes references of the fake chat icon.

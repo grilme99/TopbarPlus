@@ -1,11 +1,14 @@
 {
 	"name": "@rbxts/topbar-plus",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"description": "A Typescript port of ForeverHD's Topbar+ module",
 	"main": "out/init.lua",
 	"scripts": {
 		"prepublishOnly": "rbxtsc"
 	},
+	"files": [
+		"out"
+	],
 	"keywords": [],
 	"author": "1ForeverHD",
 	"license": "MIT",

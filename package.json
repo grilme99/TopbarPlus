@@ -1,6 +1,6 @@
 {
 	"name": "@rbxts/topbar-plus",
-	"version": "1.0.10",
+	"version": "1.0.11",
 	"description": "A Typescript port of ForeverHD's Topbar+ module",
 	"main": "out/init.lua",
 	"scripts": {

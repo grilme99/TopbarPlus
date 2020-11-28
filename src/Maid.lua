@@ -1,7 +1,19 @@
+-- Maid
+-- Author: Quenty
+-- Source: https://github.com/Quenty/NevermoreEngine/blob/8ef4242a880c645b2f82a706e8074e74f23aab06/Modules/Shared/Events/Maid.lua
+-- License: MIT (https://github.com/Quenty/NevermoreEngine/blob/version2/LICENSE.md)
+-- Modified for use in HDAdmin
+
+
 ---	Manages the cleaning of events and other things.
 -- Useful for encapsulating state and make deconstructors easy
 -- @classmod Maid
 -- @see Signal
+
+local replicatedStorage = game:GetService("ReplicatedStorage")
+local HDAdmin = replicatedStorage:WaitForChild("HDAdmin")
+local Promise = require(HDAdmin:WaitForChild("Promise"))
+
 
 local Maid = {}
 Maid.ClassName = "Maid"
@@ -59,6 +71,8 @@ function Maid:__newindex(index, newTask)
 			oldTask:Disconnect()
 		elseif oldTask.Destroy then
 			oldTask:Destroy()
+		elseif oldTask.destroy then
+			oldTask:destroy()
 		end
 	end
 end
@@ -66,7 +80,7 @@ end
 --- Same as indexing, but uses an incremented number as a key.
 -- @param task An item to clean
 -- @treturn number taskId
-function Maid:GiveTask(task)
+function Maid:giveTask(task)
 	if not task then
 		error("Task cannot be false or nil", 2)
 	end
@@ -74,32 +88,42 @@ function Maid:GiveTask(task)
 	local taskId = #self._tasks+1
 	self[taskId] = task
 
-	if type(task) == "table" and (not task.Destroy) then
+	if type(task) == "table" and (not (task.Destroy or task.destroy)) then
 		warn("[Maid.GiveTask] - Gave table task without .Destroy\n\n" .. debug.traceback())
 	end
 
 	return taskId
 end
 
-function Maid:GivePromise(promise)
-	if not promise:IsPending() then
+function Maid:givePromise(promise)
+	if (promise:getStatus() ~= Promise.Status.Started) then
 		return promise
 	end
 
-	local newPromise = promise.resolved(promise)
-	local id = self:GiveTask(newPromise)
+	local newPromise = Promise.resolve(promise)
+	local id = self:giveTask(newPromise)
 
 	-- Ensure GC
-	newPromise:Finally(function()
+	newPromise:finally(function()
 		self[id] = nil
 	end)
 
-	return newPromise
+	return newPromise, id
+end
+
+function Maid:give(taskOrPromise)
+	local taskId
+	if type(taskOrPromise) == "table" and taskOrPromise.isAPromise then
+		_, taskId = self:givePromise(taskOrPromise)
+	else
+		taskId = self:giveTask(taskOrPromise)
+	end
+	return taskOrPromise, taskId
 end
 
 --- Cleans up all tasks.
 -- @alias Destroy
-function Maid:DoCleaning()
+function Maid:doCleaning()
 	local tasks = self._tasks
 
 	-- Disconnect all events first as we know this is safe
@@ -120,6 +144,8 @@ function Maid:DoCleaning()
 			task:Disconnect()
 		elseif task.Destroy then
 			task:Destroy()
+		elseif task.destroy then
+			task:destroy()
 		end
 		index, task = next(tasks)
 	end
@@ -127,6 +153,7 @@ end
 
 --- Alias for DoCleaning()
 -- @function Destroy
-Maid.Destroy = Maid.DoCleaning
+Maid.destroy = Maid.doCleaning
+Maid.clean = Maid.doCleaning
 
 return Maid

@@ -1,28 +1,23 @@
 -- LOCAL
 local tweenService = game:GetService("TweenService")
-local replicatedStorage = game:GetService("ReplicatedStorage")
 local debris = game:GetService("Debris")
 local userInputService = game:GetService("UserInputService")
 local textService = game:GetService("TextService")
-local guiService = game:GetService("GuiService")
 local player = game:GetService("Players").LocalPlayer
 local playerGui = player.PlayerGui
 local topbarPlusGui = playerGui:WaitForChild("Topbar+")
 local topbarContainer = topbarPlusGui.TopbarContainer
 local iconTemplate = topbarContainer["_IconTemplate"]
-local HDAdmin = replicatedStorage:WaitForChild("HDAdmin")
-local Signal = require(HDAdmin:WaitForChild("Signal"))
-local Maid = require(HDAdmin:WaitForChild("Maid"))
+local Maid = require(script.Parent:WaitForChild("Maid"))
+local Signal = require(script.Parent:WaitForChild("Signal"))
 local Icon = {}
 Icon.__index = Icon
-
-
 
 -- CONSTRUCTOR
 function Icon.new(name, imageId, order, label)
 	local self = {}
 	setmetatable(self, Icon)
-	
+
 	local container = iconTemplate:Clone()
 	local button = container.IconButton
 	self.objects = {
@@ -41,11 +36,11 @@ function Icon.new(name, imageId, order, label)
 	}
 	container.Name = name
 	container.Visible = true
-	
+
 	self.theme = {
 		-- TOGGLE EFFECT
 		["toggleTweenInfo"] = TweenInfo.new(0, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-		
+
 		-- OBJECT PROPERTIES
 		["container"] = {
 			selected = {},
@@ -109,12 +104,12 @@ function Icon.new(name, imageId, order, label)
 	self.toggleStatus = "deselected"
 	self.isSelected = false
 	self:applyThemeToAllObjects()
-	
+
 	local maid = Maid.new()
 	self._maid = maid
 	self._fakeChatMaid = maid:give(Maid.new())
 	self._hoveringMaid = maid:give(Maid.new())
-	
+
 	self._captionTweenInfo = TweenInfo.new(0.1,Enum.EasingStyle.Quad,Enum.EasingDirection.Out)
 	self._captionTweens = {
 		inTweens = {
@@ -133,7 +128,7 @@ function Icon.new(name, imageId, order, label)
 	self.deselected = maid:give(Signal.new())
 	self.endNotifications = maid:give(Signal.new())
 	maid:give(container)
-	
+
 	self.name = name
 	self.tip = ""
 	self.controllerTip = ""
@@ -151,7 +146,7 @@ function Icon.new(name, imageId, order, label)
 	self.deselectWhenOtherIconSelected = true
 	self.maxTouchTime = 0.5
 	self._isControllerMode = false
-	
+
 	self.captionTween = function(active)
 		if active then
 			if not self.objects.captionContainer.Visible then
@@ -169,7 +164,7 @@ function Icon.new(name, imageId, order, label)
 			end
 		end
 	end
-	
+
 	if userInputService.MouseEnabled or userInputService.GamepadEnabled then
 		button.MouseButton1Click:Connect(function()
 			if self.toggleStatus == "selected" then
@@ -221,11 +216,11 @@ function Icon.new(name, imageId, order, label)
 			input:Destroy()
 		end)
 	end
-	
+
 	if imageId then
 		self:setImage(imageId)
 	end
-	
+
 	self._hoverFunctions = {
 		enter = function(x,y)
 			self:updateToolTip(true, Vector2.new(x,y))
@@ -244,7 +239,7 @@ function Icon.new(name, imageId, order, label)
 			self:updateStateOverlay(1)
 		end,
 	}
-	
+
 	maid:give(button.MouseEnter:Connect(self._hoverFunctions.enter))
 	maid:give(button.MouseLeave:Connect(self._hoverFunctions.leave))
 	maid:give(button.SelectionGained:Connect(function()
@@ -256,9 +251,9 @@ function Icon.new(name, imageId, order, label)
 	maid:give(self.objects.corner:GetPropertyChangedSignal("CornerRadius"):Connect(function()
 		self.objects.button.Parent.StateOverlay.UICorner.CornerRadius = self.objects.corner.CornerRadius
 	end))
-	
+
 	container.Parent = topbarContainer
-	
+
 	return self
 end
 
@@ -267,7 +262,7 @@ end
 -- METHODS
 function setToolTipPosition(x,y)
 	local tipContainer = topbarPlusGui.ToolTip
-	
+
 	local camera = workspace.CurrentCamera
 	if camera then
 		local viewportSize = camera.ViewportSize
@@ -276,7 +271,7 @@ function setToolTipPosition(x,y)
 		x = posX
 		y = posY
 	end
-	
+
 	tipContainer.Position = UDim2.new(0,x,0,y)
 end
 
@@ -621,7 +616,7 @@ function Icon:notify(clearNoticeEvent)
 		self.totalNotifications = self.totalNotifications + 1
 		self.objects.amount.Text = (self.totalNotifications < 100 and self.totalNotifications) or "99+"
 		self.objects.notification.Visible = true
-		
+
 		local dropdown = self.dropdown
 		local promptedOptions = {}
 		if dropdown then
@@ -648,7 +643,7 @@ function Icon:notify(clearNoticeEvent)
 				end
 			end
 		end
-		
+
 		local notifComplete = Signal.new()
 		local endEvent = self.endNotifications:Connect(function()
 			notifComplete:Fire()
@@ -656,18 +651,18 @@ function Icon:notify(clearNoticeEvent)
 		local customEvent = clearNoticeEvent:Connect(function()
 			notifComplete:Fire()
 		end)
-		
+
 		notifComplete:Wait()
-		
+
 		endEvent:Disconnect()
 		customEvent:Disconnect()
 		notifComplete:Disconnect()
-		
+
 		self.totalNotifications = self.totalNotifications - 1
 		if self.totalNotifications < 1 then
 			self.objects.notification.Visible = false
 		end
-		
+
 		if self.dropdown then
 			for _, option in pairs(promptedOptions) do
 				local dNotice = option.notice

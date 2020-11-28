@@ -1,11 +1,9 @@
 local contentProvider = game:GetService("ContentProvider")
-local replicatedStorage = game:GetService("ReplicatedStorage")
 local runService = game:GetService("RunService")
 local userInputService = game:GetService("UserInputService")
 local starterGui = game:GetService("StarterGui")
-local HDAdmin = replicatedStorage:WaitForChild("HDAdmin")
-local Maid = require(HDAdmin:WaitForChild("Maid"))
-local Signal = require(HDAdmin:WaitForChild("Signal"))
+local Maid = require(script.Parent:WaitForChild("Maid"))
+local Signal = require(script.Parent:WaitForChild("Signal"))
 
 local dropdown = {}
 dropdown.__index = dropdown
@@ -13,7 +11,7 @@ dropdown.__index = dropdown
 function dropdown.new(icon, options)
 	local self = {}
 	setmetatable(self, dropdown)
-	
+
 	local maid = Maid.new()
 	self._maid = maid
 	self._tempConnections = maid:give(Maid.new())
@@ -49,7 +47,7 @@ function dropdown.new(icon, options)
 	coroutine.wrap(function()
 		contentProvider:PreloadAsync(preload)
 	end)()
-	
+
 	local function open(input)
 		local position = input and Vector2.new(input.Position.X,input.Position.Y)
 		if self.isOpen then self:hide() return end
@@ -61,19 +59,19 @@ function dropdown.new(icon, options)
 		end
 		input:Destroy()
 	end))
-	maid:give(self.icon.objects.button.TouchLongPress:Connect(function(positions,state)
+	maid:give(self.icon.objects.button.TouchLongPress:Connect(function(_, state)
 		if state == Enum.UserInputState.Begin then
 			open()
 		end
 	end))
-	
+
 	self:close()
 	self:update()
 	return self
 end
 
 function dropdown:createOption(option)
-	
+
 	local optionContainer = self._maid:give(Instance.new("Frame"))
 	optionContainer.Name = "Option"
 	optionContainer.BackgroundColor3 = Color3.new(1,1,1)
@@ -84,7 +82,7 @@ function dropdown:createOption(option)
 	optionContainer.Selectable = true
 	optionContainer.ZIndex = 11
 	optionContainer.Visible = false
-	
+
 	local optionIcon = Instance.new("ImageLabel")
 	optionIcon.Name = "Icon"
 	optionIcon.Image = option.icon or ""
@@ -95,7 +93,7 @@ function dropdown:createOption(option)
 	optionIcon.Size = UDim2.new(0,25,0,25)
 	optionIcon.ZIndex = 12
 	optionIcon.Parent = optionContainer
-	
+
 	local optionText = Instance.new("TextLabel")
 	optionText.Name = "OptionName"
 	optionText.Text = option.name
@@ -109,17 +107,17 @@ function dropdown:createOption(option)
 	optionText.ZIndex = 12
 	optionText.TextXAlignment = Enum.TextXAlignment.Left
 	optionText.Parent = optionContainer
-	
+
 	local uiText = Instance.new("UITextSizeConstraint")
 	uiText.MaxTextSize = 18
 	uiText.MinTextSize = 8
 	uiText.Parent = optionText
-	
+
 	option.container = optionContainer
 	option.order = option.order or 1
 	option.events = option.events or {}
 	table.insert(self.options, option)
-	
+
 	optionContainer.MouseEnter:Connect(function()
 		optionContainer.BackgroundTransparency = 0.9
 	end)
@@ -147,7 +145,7 @@ function dropdown:createOption(option)
 	end)
 
 	optionContainer.Parent = script.Temp
-	
+
 	self:update()
 	return option
 end
@@ -182,7 +180,7 @@ function dropdown:update()
 		option.container.OptionName.TextColor3 = self.settings.textColor
 		option.container.Icon.ImageColor3 = self.settings.imageColor
 	end
-	
+
 	local isIcon = false
 	for _, option in pairs(self.options) do
 		if option.container.Icon.Image ~= "" then
@@ -287,7 +285,7 @@ function dropdown:open(position)
 	else
 		dropdownContainer.Position = UDim2.new(0,self.icon.objects.container.AbsolutePosition.X,0,self.icon.objects.container.AbsolutePosition.Y+36+32)--topbar offset and icon size
 	end
-	
+
 	if workspace.CurrentCamera then
 		local viewportSize = workspace.CurrentCamera.ViewportSize
 		local newPosition = UDim2.new(
@@ -298,7 +296,7 @@ function dropdown:open(position)
 		)
 		dropdownContainer.Position = ToScale(newPosition,viewportSize)
 	end
-	
+
 	for _,option in pairs(dropdownContainer:GetChildren()) do
 		if option:IsA("Frame") and option.Name == "Option" then
 			option.Visible = false
@@ -313,20 +311,20 @@ function dropdown:open(position)
 		option.container.Position = UDim2.new(0,0,0,4+(35*i)-35)
 		containerSizeY = containerSizeY + option.container.Size.Y.Offset
 	end
-	
+
 	if self.settings.canHidePlayerlist and self.icon.alignment == "right" and starterGui:GetCoreGuiEnabled(Enum.CoreGuiType.PlayerList) then
 		starterGui:SetCoreGuiEnabled(Enum.CoreGuiType.PlayerList,false)
 		self.bringBackPlayerlist = true
 	end
-	
+
 	local chat = dropdownContainer.Parent.Parent:FindFirstChild("Chat")
 	if chat and self.settings.canHideChat and dropdownContainer.Parent.DisplayOrder < chat.DisplayOrder then
 		chat.DisplayOrder = dropdownContainer.Parent.DisplayOrder-1
 		self.bringBackChat = true
 	end
-	
+
 	self:update()
-	
+
 	if not userInputService.MouseEnabled and userInputService.TouchEnabled then
 		local clickSound = dropdownContainer.Parent:FindFirstChild("ClickSound")
 		if clickSound and clickSound.IsLoaded then
@@ -337,7 +335,7 @@ function dropdown:open(position)
 			contentProvider:PreloadAsync({clickSound})
 		end
 	end
-	
+
 	dropdownContainer.Size = UDim2.new(0.1,0,0,0)
 	dropdownContainer.Visible = true
 	dropdownContainer:TweenSize(
@@ -347,7 +345,7 @@ function dropdown:open(position)
 		self.settings.tweenSpeed,
 		true
 	)
-	
+
 	local connection1
 	connection1 = self._tempConnections:give(runService.Heartbeat:Connect(function()
 		connection1:Disconnect()
@@ -374,7 +372,7 @@ function dropdown:open(position)
 			input:Destroy()
 		end))
 	end))
-	
+
 	local connection2
 	connection2 = self._tempConnections:give(runService.Heartbeat:Connect(function()
 		connection2:Disconnect()
@@ -384,7 +382,7 @@ function dropdown:open(position)
 			end))
 		end
 	end))
-	
+
 	self.opened:Fire()
 
 end

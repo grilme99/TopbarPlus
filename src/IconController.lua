@@ -31,9 +31,9 @@ end
 local function checkTopbarEnabled()
 	local success, bool = xpcall(function()
 		return starterGui:GetCore("TopbarEnabled")
-	end,function(err)
+	end,function()
 		--has not been registered yet, but default is that is enabled
-		return true	
+		return true
 	end)
 	return (success and bool)
 end
@@ -79,22 +79,22 @@ local function updateIconCellSize(icon, controllerEnabled)
 end
 
 function IconController:createIcon(name, imageId, order, withText)
-	
+
 	-- Verify data
 	assert(not topbarIcons[name], ("icon '%s' already exists!"):format(name))
-	
+
 	-- Create and record icon
 	local icon = Icon.new(name, imageId, order, withText)
 	local iconDetails = {name = name, icon = icon, order = icon.order}
 	topbarIcons[name] = iconDetails
 	icon:setOrder(icon.order)
-	
+
 	-- Apply game theme if found
 	local gameTheme = self.gameTheme
 	if gameTheme then
 		icon:setTheme(gameTheme)
 	end
-	
+
 	-- Events
 	local gap = 12
 	local function getIncrement(otherIcon)
@@ -105,20 +105,20 @@ function IconController:createIcon(name, imageId, order, withText)
 	end
 	local function updateIcon()
 		assert(iconDetails, ("Failed to update Icon '%s': icon not found."):format(name))
-		
+
 		if topbarUpdating then -- This prevents the topbar updating and shifting icons more than it needs to
 			return false
 		end
 		topbarUpdating = true
 		runService.Heartbeat:Wait()
 		topbarUpdating = false
-		
+
 		iconDetails.order = icon.order or 1
 		local defaultIncrement = 44
 		local alignmentDetails = {
 			left = {
 				startScale = 0,
-				getStartOffset = function() 
+				getStartOffset = function()
 					local offset = 104
 					if not starterGui:GetCoreGuiEnabled("Chat") then
 						offset = offset - defaultIncrement
@@ -129,14 +129,14 @@ function IconController:createIcon(name, imageId, order, withText)
 			},
 			mid = {
 				startScale = 0.5,
-				getStartOffset = function(totalIconX) 
+				getStartOffset = function(totalIconX)
 					return -totalIconX/2 + (gap/2)
 				end,
 				records = {}
 			},
 			right = {
 				startScale = 1,
-				getStartOffset = function(totalIconX) 
+				getStartOffset = function(totalIconX)
 					local offset = -totalIconX
 					if starterGui:GetCoreGuiEnabled(Enum.CoreGuiType.PlayerList) or starterGui:GetCoreGuiEnabled(Enum.CoreGuiType.Backpack) or starterGui:GetCoreGuiEnabled(Enum.CoreGuiType.EmotesMenu) then
 						offset = offset - defaultIncrement
@@ -188,13 +188,13 @@ function IconController:createIcon(name, imageId, order, withText)
 			end
 		end
 	end)
-	
+
 	if isControllerMode() then
 		updateIconCellSize(icon, true)
 		icon._previousAlignment = icon.alignment
 		icon:setMid()
 	end
-	
+
 	return icon
 end
 
@@ -236,7 +236,7 @@ function IconController:setTopbarEnabled(bool, forceBool)
 				guiService:AddSelectionParent("TopbarPlus",topbar.TopbarContainer)
 				guiService.CoreGuiNavigationEnabled = false
 				guiService.GuiNavigationEnabled = true
-				
+
 				local selectObject
 				local targetOffset = 0
 				runService.Heartbeat:Wait()

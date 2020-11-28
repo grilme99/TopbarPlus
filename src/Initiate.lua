@@ -1,4 +1,4 @@
-if (not game:GetService('RunService'):IsServer()) then return end
+if (not game:GetService('RunService'):IsServer()) then return true end
 
 -- UTILITY
 local DirectoryService = require(4926442976)

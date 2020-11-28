@@ -258,7 +258,7 @@ declare interface Icon {
      * end the notification. If not specified, clearNoticeEvent defaults to
      * icon.deselected.
      */
-    notify(this: Icon, clearNoticeEvent: RBXScriptSignal): void
+    notify(this: Icon, clearNoticeEvent?: RBXScriptSignal): void
 
     /** Clears all notifications. */
     clearNotifications(this: Icon): void

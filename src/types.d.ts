@@ -16,6 +16,10 @@ export interface IThemeStructure {
     gradient?: IToggleDetails<UIGradient>
     corner?: IToggleDetails<UICorner>
     label?: IToggleDetails<TextLabel>
+    captionContainer?: IToggleDetails<Frame>
+    captionBackground?: IToggleDetails<Frame>
+    captionText?: IToggleDetails<TextLabel>
+    captionOverline?: IToggleDetails<Frame>
 }
 
 export interface IDropdownOption {

@@ -228,9 +228,9 @@ uiSize.Name = "_UISizeConstraint"
 uiSize.MinSize = Vector2.new(150,0)
 uiSize.Parent = dropdown
 
--- local tempFolder = Instance.new("Folder")
--- tempFolder.Name = "Temp"
--- tempFolder.Parent = script:WaitForChild("Dropdown")
+local tempFolder = Instance.new("Folder")
+tempFolder.Name = "Temp"
+tempFolder.Parent = dropdown -- script:WaitForChild("Dropdown")
 
 local clickSound = Instance.new("Sound")
 clickSound.Name = "ClickSound"

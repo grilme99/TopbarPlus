@@ -144,7 +144,7 @@ function dropdown:createOption(option)
 		end
 	end)
 
-	optionContainer.Parent = script.Temp
+	--optionContainer.Parent = script.Temp
 
 	self:update()
 	return option
@@ -300,7 +300,7 @@ function dropdown:open(position)
 	for _,option in pairs(dropdownContainer:GetChildren()) do
 		if option:IsA("Frame") and option.Name == "Option" then
 			option.Visible = false
-			option.Parent = script.Temp
+			option.Parent = nil
 		end
 	end
 	local containerSizeY = 8 --for top and bottom rounded rect

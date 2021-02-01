@@ -258,9 +258,9 @@ declare interface IconConstructor {
 	 * @param coreIconToMimic Mimicable Items: `"PlayerList"`, `"Backpack"`,
 	 * `"Chat"`, `"EmotesMenu"`
 	 */
-	mimic(
+	mimic: (
 		coreIconToMimic: "PlayerList" | "Backpack" | "Chat" | "EmotesMenu"
-	): Icon;
+	) => Icon;
 }
 
 declare const Icon: IconConstructor;

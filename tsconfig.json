@@ -18,7 +18,5 @@
 		"outDir": "out",
 		"baseUrl": "src",
 		"declaration": true,
-		"incremental": true,
-		"tsBuildInfoFile": "out/tsconfig.tsbuildinfo"
 	}
 }

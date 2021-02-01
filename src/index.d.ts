@@ -55,50 +55,50 @@ export interface Theme {
 	/** Settings where toggleState doesn't matter (they have a singular state) */
 	other?: {
 		// Caption settings
-		captionBackgroundColor: Color3;
-		captionBackgroundTransparency: number;
-		captionTextColor: Color3;
-		captionTextTransparency: number;
-		captionFont: Enum.Font;
-		captionOverlineColor: Color3;
-		captionOverlineTransparency: number;
-		captionCornerRadius: UDim;
+		captionBackgroundColor?: Color3;
+		captionBackgroundTransparency?: number;
+		captionTextColor?: Color3;
+		captionTextTransparency?: number;
+		captionFont?: Enum.Font;
+		captionOverlineColor?: Color3;
+		captionOverlineTransparency?: number;
+		captionCornerRadius?: UDim;
 		// Tip settings
-		tipBackgroundColor: Color3;
-		tipBackgroundTransparency: number;
-		tipTextColor: Color3;
-		tipTextTransparency: number;
-		tipFont: Enum.Font;
-		tipCornerRadius: UDim;
+		tipBackgroundColor?: Color3;
+		tipBackgroundTransparency?: number;
+		tipTextColor?: Color3;
+		tipTextTransparency?: number;
+		tipFont?: Enum.Font;
+		tipCornerRadius?: UDim;
 		// Dropdown settings
 		/** `auto` is where the dropdown alignment matches the icons alignment */
-		dropdownAlignment: "left" | "mid" | "right" | "auto";
-		dropdownMaxIconsBeforeScroll: number;
-		dropdownMinWidth: number;
-		dropdownSquareCorners: boolean;
-		dropdownBindToggleToIcon: boolean;
-		dropdownToggleOnLongPress: boolean;
-		dropdownToggleOnRightClick: boolean;
-		dropdownCloseOnTapAway: boolean;
-		dropdownHidePlayerlistOnOverlap: boolean;
-		dropdownListPadding: UDim;
-		dropdownScrollBarColor: Color3;
-		dropdownScrollBarTransparency: number;
-		dropdownScrollBarThickness: number;
+		dropdownAlignment?: "left" | "mid" | "right" | "auto";
+		dropdownMaxIconsBeforeScroll?: number;
+		dropdownMinWidth?: number;
+		dropdownSquareCorners?: boolean;
+		dropdownBindToggleToIcon?: boolean;
+		dropdownToggleOnLongPress?: boolean;
+		dropdownToggleOnRightClick?: boolean;
+		dropdownCloseOnTapAway?: boolean;
+		dropdownHidePlayerlistOnOverlap?: boolean;
+		dropdownListPadding?: UDim;
+		dropdownScrollBarColor?: Color3;
+		dropdownScrollBarTransparency?: number;
+		dropdownScrollBarThickness?: number;
 		// Menu settings
 		/**
 		 * for `auto`, if alignment is `left` or `mid`, menuDirection will be `right`, else
 		 * menuDirection is 'left'
 		 */
-		menuDirection: "left" | "right" | "auto";
-		menuMaxIconsBeforeScroll: number;
-		menuBindToggleToIcon: boolean;
-		menuToggleOnLongPress: boolean;
-		menuToggleOnRightClick: boolean;
-		menuCloseOnTapAway: boolean;
-		menuScrollBarColor: Color3;
-		menuScrollBarTransparency: number;
-		menuScrollBarThickness: number;
+		menuDirection?: "left" | "right" | "auto";
+		menuMaxIconsBeforeScroll?: number;
+		menuBindToggleToIcon?: boolean;
+		menuToggleOnLongPress?: boolean;
+		menuToggleOnRightClick?: boolean;
+		menuCloseOnTapAway?: boolean;
+		menuScrollBarColor?: Color3;
+		menuScrollBarTransparency?: number;
+		menuScrollBarThickness?: number;
 	};
 }
 

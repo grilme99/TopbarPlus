@@ -1,6 +1,6 @@
 declare type ToggleState = 'selected' | 'deselected'
 
-interface ToggleStateTheme {
+export interface ToggleStateTheme {
     iconBackgroundColor?: Color3
     iconBackgroundTransparency?: number
     iconCornerRadius?: UDim
@@ -30,7 +30,7 @@ interface ToggleStateTheme {
     clickTimePosition?: number
 }
 
-declare interface Theme {
+export interface Theme {
     /** Settings which describe how an item behaves or transitions between states */
     action?: {
         toggleTransitionInfo?: TweenInfo
@@ -249,4 +249,4 @@ declare interface IconConstructor {
 }
 
 declare const Icon: IconConstructor
-export = Icon
+export default Icon

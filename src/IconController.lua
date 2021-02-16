@@ -770,7 +770,7 @@ end)()
 
 -- Mimic the enabling of the topbar when StarterGui:SetCore("TopbarEnabled", state) is called
 coroutine.wrap(function()
-	local ChatMain = require(players.LocalPlayer.PlayerScripts:WaitForChild("ChatScript").ChatMain)
+	local ChatMain = require(players.LocalPlayer.PlayerScripts:WaitForChild("ChatScript", 90).ChatMain)
 	ChatMain.CoreGuiEnabled:connect(function()
 		local topbarEnabled = checkTopbarEnabled()
 		if topbarEnabled == IconController.previousTopbarEnabled then

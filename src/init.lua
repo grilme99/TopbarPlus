@@ -1164,7 +1164,7 @@ function Icon:_setToggleItemsVisible(bool, byIcon)
 		if not byIcon or byIcon.toggleItems[toggleItem] == nil then
 			local property = "Visible"
 			if toggleItem:IsA("LayerCollector") then
-				property = "Enbaled"
+				property = "Enabled"
 			end
 			toggleItem[property] = bool
 		end

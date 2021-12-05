@@ -1,106 +1,9 @@
+import { Theme, ThemesTable } from "./Themes";
+export const Themes: ThemesTable;
+
 export type ToggleState = "selected" | "deselected";
-
-declare interface ToggleStateTheme {
-	iconBackgroundColor?: Color3;
-	iconBackgroundTransparency?: number;
-	iconCornerRadius?: UDim;
-	iconGradientColor?: ColorSequence;
-	iconGradientRotation?: number;
-	iconImage?: string;
-	iconImageColor?: Color3;
-	iconImageTransparency?: number;
-	iconImageYScale?: number;
-	iconImageRatio?: number;
-	iconLabelYScale?: number;
-	iconScale?: UDim2;
-	iconSize?: UDim2;
-	iconOffset?: UDim2;
-	iconText?: string;
-	iconTextColor?: Color3;
-	iconFont?: Enum.Font;
-	noticeCircleColor?: Color3;
-	noticeCircleImage?: string;
-	noticeTextColor?: Color3;
-	baseZIndex?: number;
-	order?: number;
-	alignment?: "left" | "mid" | "right";
-	clickSoundId?: string;
-	clickVolume?: number;
-	clickPlaybackSpeed?: number;
-	clickTimePosition?: number;
-}
-
-export interface Theme {
-	/** Settings which describe how an item behaves or transitions between states */
-	action?: {
-		toggleTransitionInfo?: TweenInfo;
-		captionFadeInfo?: TweenInfo;
-		tipFadeInfo?: TweenInfo;
-		dropdownSlideInfo?: TweenInfo;
-		menuSlideInfo?: TweenInfo;
-	};
-
-	/** Settings which describe how an item appears when 'deselected' and 'selected' */
-	toggleable?: {
-		/* How items appear normally (i.e. when they're 'deselected') */
-		deselected: ToggleStateTheme;
-
-		/*
-		 * How items appear after the icon has been clicked (i.e. when they're 'selected')
-		 * If a selected value is not specified, it will default to the deselected value
-		 */
-		selected?: ToggleStateTheme;
-	};
-
-	/** Settings where toggleState doesn't matter (they have a singular state) */
-	other?: {
-		// Caption settings
-		captionBackgroundColor?: Color3;
-		captionBackgroundTransparency?: number;
-		captionTextColor?: Color3;
-		captionTextTransparency?: number;
-		captionFont?: Enum.Font;
-		captionOverlineColor?: Color3;
-		captionOverlineTransparency?: number;
-		captionCornerRadius?: UDim;
-		// Tip settings
-		tipBackgroundColor?: Color3;
-		tipBackgroundTransparency?: number;
-		tipTextColor?: Color3;
-		tipTextTransparency?: number;
-		tipFont?: Enum.Font;
-		tipCornerRadius?: UDim;
-		// Dropdown settings
-		/** `auto` is where the dropdown alignment matches the icons alignment */
-		dropdownAlignment?: "left" | "mid" | "right" | "auto";
-		dropdownMaxIconsBeforeScroll?: number;
-		dropdownMinWidth?: number;
-		dropdownSquareCorners?: boolean;
-		dropdownBindToggleToIcon?: boolean;
-		dropdownToggleOnLongPress?: boolean;
-		dropdownToggleOnRightClick?: boolean;
-		dropdownCloseOnTapAway?: boolean;
-		dropdownHidePlayerlistOnOverlap?: boolean;
-		dropdownListPadding?: UDim;
-		dropdownScrollBarColor?: Color3;
-		dropdownScrollBarTransparency?: number;
-		dropdownScrollBarThickness?: number;
-		// Menu settings
-		/**
-		 * for `auto`, if alignment is `left` or `mid`, menuDirection will be `right`, else
-		 * menuDirection is 'left'
-		 */
-		menuDirection?: "left" | "right" | "auto";
-		menuMaxIconsBeforeScroll?: number;
-		menuBindToggleToIcon?: boolean;
-		menuToggleOnLongPress?: boolean;
-		menuToggleOnRightClick?: boolean;
-		menuCloseOnTapAway?: boolean;
-		menuScrollBarColor?: Color3;
-		menuScrollBarTransparency?: number;
-		menuScrollBarThickness?: number;
-	};
-}
+export type IconState = ToggleState | "hovering";
+export type TopbarBehavior = "dropdown" | "menu" | "caption" | "tip";
 
 declare interface Icon {
 	// Properties
@@ -152,8 +55,15 @@ declare interface Icon {
 	set(
 		settingName: string,
 		value: unknown,
-		toggleState?: ToggleState,
+		iconState?: IconState,
 		setAdditional?: string
+	): Icon;
+
+	setAdditionalValue(
+		settingName: string,
+		setAdditional: string,
+		value: unknown,
+		iconState?: IconState,
 	): Icon;
 
 	/**
@@ -163,18 +73,35 @@ declare interface Icon {
 	 */
 	get<T, Y>(
 		settingName: string,
-		toggleState?: ToggleState,
+		iconState?: IconState,
 		getAdditional?: string
 	): LuaTuple<[T, Y]>;
 
+	getHovering<T>(settingName: string): T;
+
 	/** Returns the current toggleState, either `"deselected"` or `"selected"`. */
-	getToggleState(): ToggleState;
+	getToggleState(isSelected?: boolean): ToggleState;
+
+	getIconState(): IconState;
 
 	/**
 	 * Applies a theme to the given icon. See
 	 * [themes](https://1foreverhd.github.io/TopbarPlus/features/#themes) for more information.
 	 */
-	setTheme(theme: Theme): Icon;
+	setTheme(theme: Theme, updateAfterSettingAll?: boolean): Icon;
+
+	getInstance(instanceName: string): Instance | Icon;
+
+	setInstance(instanceName: string, instance: Instance | Icon): Icon;
+
+	getSettingDetail<T>(targetSettingName: string): T | false;
+
+	modifySetting(settingName: string, dictionary: object): Icon;
+
+	/**
+	 * Takes a [NumberSpinner](https://devforum.roblox.com/t/numberspinner-module/1105961) object (by boatbomber) and converts it into the icons label.
+	 */
+	convertLabelToNumberSpinner(numberSpinner: any): Icon;
 
 	/** When set to `false`, the icon will be disabled and hidden. */
 	setEnabled(enabled: boolean): Icon;
@@ -185,18 +112,23 @@ declare interface Icon {
 	 */
 	setName(name: string): Icon;
 
+	/**
+	 * An alternative way of doing ``zone[propertyName] = value``. This enables the easy-configuration of icon properties within chained methods.
+	 */
+	setProperty<T>(propertyName: string, value: T): Icon;
+
 	/** Selects the icon (as if it were clicked once). */
-	select(): Icon;
+	select(byIcon?: Icon): Icon;
 
 	/** Deselects the icon (as if it were clicked, then clicked again). */
-	deselect(): Icon;
+	deselect(byIcon?: Icon): Icon;
 
 	/**
 	 * Prompts a notice bubble which accumulates the further it is prompted. If the
 	 * icon belongs to a dropdown or menu, then the notice will appear on the parent
 	 * icon when the parent icon is deselected.
 	 */
-	notify(clearNoticeEvent?: RBXScriptSignal): Icon;
+	notify(clearNoticeEvent?: RBXScriptSignal, noticeId?: string): Icon;
 	clearNotices(): Icon;
 
 	/**
@@ -205,46 +137,50 @@ declare interface Icon {
 	 */
 	disableStateOverlay(disable: boolean): Icon;
 
+	setLabel(text: string, iconState?: IconState): Icon;
+	setCornerRadius(
+		scale?: number,
+		offset?: number,
+		iconState?: IconState
+	): Icon;
 	/**
 	 * Applies an image to the icon based on the given `imageId`. `imageId` can be
 	 * an assetId or a complete asset string.
 	 */
-	setImage(imageId: string | number, toggleState?: ToggleState): Icon;
-	setLabel(text: string, toggleState?: ToggleState): Icon;
-	setOrder(order: number, toggleState?: ToggleState): Icon;
-	setCornerRadius(
-		scale?: number,
-		offset?: number,
-		toggleState?: ToggleState
-	): Icon;
-	setLeft(toggleState?: ToggleState): Icon;
-	setMid(toggleState?: ToggleState): Icon;
-	setRight(toggleState?: ToggleState): Icon;
+	setImage(imageId: string | number, iconState?: IconState): Icon;
+	setOrder(order: number, iconState?: IconState): Icon;
+	setLeft(iconState?: IconState): Icon;
+	setMid(iconState?: IconState): Icon;
+	setRight(iconState?: IconState): Icon;
 
 	/** Defines the proportional space the icons image takes up within the icons container. */
-	setImageYScale(yScale: number, toggleState?: ToggleState): Icon;
+	setImageYScale(yScale: number, iconState?: IconState): Icon;
 
 	/** Defines the x:y ratio dimensions as a number. By default ratio is `1.00`. */
-	setImageRatio(ratio: number, toggleState?: ToggleState): Icon;
+	setImageRatio(ratio: number, iconState?: IconState): Icon;
 
 	/** Defines how large label text appears.By default YScale is `0.45`. */
-	setLabelYScale(yScale: number, toggleState?: ToggleState): Icon;
+	setLabelYScale(yScale: number, iconState?: IconState): Icon;
 
 	/**
 	 * Calculates the difference between the existing baseZIndex
 	 * (i.e. `instances.iconContainer.ZIndex`) and new value, then updates the ZIndex of
 	 * all objects within the icon accordingly using this difference.
 	 */
-	setBaseZIndex(zIndex: number, toggleState?: ToggleState): Icon;
+	setBaseZIndex(zIndex: number, iconState?: IconState): Icon;
 
 	/** Determines the icons container size. By default `XOffset` and `YOffset` are `32`. */
-	setSize(xOffset: number, yOffset: number, toggleState?: ToggleState): Icon;
+	setSize(xOffset: number, yOffset: number, iconState?: IconState): Icon;
 
-	/** Binds a GuiObject or LayerCollector to appear and disappeared when the icon is toggled. */
-	bindToggleItem(guiObjectOrLayerCollector: GuiObject | LayerCollector): Icon;
+	/**
+	 * Connects to an [icon event](https://1foreverhd.github.io/TopbarPlus/api/icon/#events) based upon the given ``iconEventName`` and call ``eventFunction`` with arguments ``(self, ...)`` when the event is triggered.
+	 */
+	bindEvent(iconEventName: string, eventFunction: (icon: Icon, ...args: any[]) => void): Icon;
 
-	/** Unbinds the given GuiObject or LayerCollector from the toggle. */
-	unbindToggleItem(guiObjectOrLayerCollector: GuiObject | LayerCollector): Icon;
+	/**
+	 * Unbinds the connection of the associated ``iconEventName``.
+	 */
+	unbindEvent(iconEventName: string): Icon;
 
 	/** Binds a keycode which toggles the icon when pressed. */
 	bindToggleKey(keyCode: Enum.KeyCode): Icon;
@@ -261,17 +197,32 @@ declare interface Icon {
 	/** The gap between the top of the screen and the icon. */
 	setTopPadding(offset?: number, scale?: number): Icon;
 
+	/** Binds a GuiObject or LayerCollector to appear and disappeared when the icon is toggled. */
+	bindToggleItem(guiObjectOrLayerCollector: GuiObject | LayerCollector): Icon;
+
+	/** Unbinds the given GuiObject or LayerCollector from the toggle. */
+	unbindToggleItem(guiObjectOrLayerCollector: GuiObject | LayerCollector): Icon;
+
+	/**
+	 * Passes the given userdata to the Icons maid to be destroyed/disconnected on the icons destruction. If a function is passed, it will be executed right away with its self (the icon) being passed as the first argument. The return value is then given to the maid (instead of the function).
+	 */
+	give(userData: any): Icon;
+
 	/** Sets a tip. To remove, pass `nil` as `text`. */
 	setTip(text?: string): Icon;
+
+	displayTip(display?: boolean): Icon;
 
 	/** Sets a caption. To remove, pass nil as text. */
 	setCaption(text?: string): Icon;
 
+	displayCaption(display?: boolean): Icon;
+
 	/**
 	 * Parents the icon to the given parentIcon under the specified
-	 * feature, either `"dropdown"` or `"menu"`.
+	 * feature, either `"dropdown"`, `"menu"`, `"caoption"`, or `"tip"`.
 	 */
-	join(parentIcon: Icon, featureName: "dropdown" | "menu"): Icon;
+	join(parentIcon: Icon, featureName: TopbarBehavior, dontUpdate?: boolean): Icon;
 
 	/** Unparents an icon from a parentIcon if it belongs to a dropdown or menu. */
 	leave(): Icon;
@@ -292,6 +243,9 @@ declare interface Icon {
 
 	/** Clears all connections and destroys all instances associated with the icon. */
 	destroy(): Icon;
+
+	/** an alias for you maid-using Pascal lovers */
+	Destroy(): Icon;
 }
 
 declare interface IconConstructor {

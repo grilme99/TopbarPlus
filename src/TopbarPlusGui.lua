@@ -37,7 +37,7 @@ iconButton.ZIndex = 10--2
 iconButton.BorderSizePixel = 0
 iconButton.AutoButtonColor = false
 iconButton.Parent = iconContainer
-iconButton.Active = false
+iconButton.Active = true
 
 local iconImage = Instance.new("ImageLabel")
 iconImage.BackgroundTransparency = 1
@@ -57,6 +57,7 @@ iconLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
 iconLabel.Text = ""
 iconLabel.RichText = true
 iconLabel.TextScaled = false
+iconLabel.ClipsDescendants = true
 iconLabel.ZIndex = 11--3
 iconLabel.Parent = iconButton
 iconLabel.Active = false

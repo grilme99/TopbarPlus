@@ -897,7 +897,7 @@ function IconController.setupHealthbar()
 	-- Create a fake healthbar icon to mimic the core health gui
 	task.defer(function()
 		runService.Heartbeat:Wait()
-		local Icon = require(script.Parent).default
+		local Icon = require(script.Parent)
 
 		Icon.new()
 			:setProperty("internalIcon", true)
@@ -1031,7 +1031,7 @@ coroutine.wrap(function()
 	
 	-- Create PC 'Enter Controller Mode' Icon
 	runService.Heartbeat:Wait() -- This is required to prevent an infinite recursion
-	local Icon = require(script.Parent).default
+	local Icon = require(script.Parent)
 	local controllerOptionIcon = Icon.new()
 		:setProperty("internalIcon", true)
 		:setName("_TopbarControllerOption")

@@ -2529,4 +2529,4 @@ Icon.Destroy = Icon.destroy -- an alias for you maid-using Pascal lovers
 
 
 
-return { default = Icon, Themes = Themes }
+return Icon

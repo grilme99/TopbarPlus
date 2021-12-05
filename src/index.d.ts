@@ -1,9 +1,6 @@
-import { Theme, ThemesTable } from "./Themes";
-export const Themes: ThemesTable;
-
-export type ToggleState = "selected" | "deselected";
-export type IconState = ToggleState | "hovering";
-export type TopbarBehavior = "dropdown" | "menu" | "caption" | "tip";
+type ToggleState = "selected" | "deselected";
+type IconState = ToggleState | "hovering";
+type TopbarBehavior = "dropdown" | "menu" | "caption" | "tip";
 
 declare interface Icon {
 	// Properties
@@ -267,4 +264,4 @@ declare interface IconConstructor {
 }
 
 declare const Icon: IconConstructor;
-export default Icon;
+export = Icon;

@@ -3,12 +3,14 @@ This file is necessary for constructing the default Icon template
 Do not remove this module otherwise TopbarPlus will break
 Modifying this file may also cause TopbarPlus to break
 It's recommended instead to create a separate theme module and use that instead
+
 To apply your theme after creating it, do:
 ```lua
 local IconController = require(pathway.to.IconController)
 local Themes = require(pathway.to.Themes)
 IconController.setGameTheme(Themes.YourThemeName)
 ```
+
 or by applying to an individual icon:
 ```lua
 local Icon = require(pathway.to.Icon)
@@ -23,6 +25,8 @@ return {
     -- Settings which describe how an item behaves or transitions between states
     action =  {
         toggleTransitionInfo = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        resizeInfo = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        repositionInfo = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
         captionFadeInfo = TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
         tipFadeInfo = TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
         dropdownSlideInfo = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
@@ -45,6 +49,7 @@ return {
             iconImageRatio = 1,
             iconLabelYScale = 0.45,
             iconScale = UDim2.new(1, 0, 1, 0),
+            forcedIconSize = UDim2.new(0, 32, 0, 32);
             iconSize = UDim2.new(0, 32, 0, 32),
             iconOffset = UDim2.new(0, 0, 0, 0),
             iconText = "",

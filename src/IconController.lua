@@ -1,3 +1,146 @@
+--[[ icon_controller:header
+## Functions
+
+#### setGameTheme
+```lua
+IconController.setGameTheme(theme)
+```
+Sets the default theme which is applied to all existing and future icons.
+
+----
+#### setDisplayOrder
+```lua
+IconController.setDisplayOrder(number)
+```
+Changes the DisplayOrder of the TopbarPlus ScreenGui to the given value.
+
+----
+#### setTopbarEnabled
+```lua
+IconController.setTopbarEnabled(bool)
+```
+When set to ``false``, hides all icons created with TopbarPlus. This can also be achieved by calling ``starterGui:SetCore("TopbarEnabled", false)``.
+
+----
+#### setGap
+```lua
+IconController.setGap(integer, alignment)
+```
+Defines the offset width (i.e. gap) between each icon for the given alignment, ``left``, ``mid``, ``right``, or all alignments if not specified. 
+
+----
+#### setLeftOffset
+```lua
+IconController.setLeftOffset(integer)
+```
+Defines the offset from the left side of the screen to the nearest left-set icon. 
+
+----
+#### setRightOffset
+```lua
+IconController.setRightOffset(integer)
+```
+Defines the offset from the right side of the screen to the nearest right-set icon. 
+
+----
+#### updateTopbar
+```lua
+IconController.updateTopbar()
+```
+Determines how icons should be positioned on the topbar and moves them accordingly.  
+
+----
+#### clearIconOnSpawn
+```lua
+IconController.clearIconOnSpawn(icon)
+```
+Calls destroy on the given icon when the player respawns. This is useful for scenarious where you wish to cleanup icons that are constructed within a Gui with ``ResetOnSpawn`` set to ``true``. For example:
+
+```lua
+-- Place at the bottom of your icon creator localscript
+local icons = IconController.getIcons()
+for _, icon in pairs(icons) do
+	IconController.clearIconOnSpawn(icon)
+end
+```
+
+----
+#### getIcons
+```lua
+local arrayOfIcons = IconController.getIcons()
+```
+Returns all icons as an array.
+
+----
+#### getIcon
+```lua
+local icon = IconController.getIcon(name)
+```
+Returns the icon with the given name (or ``false`` if not found). If multiple icons have the same name, then one will be returned randomly.
+
+----
+#### disableHealthbar
+```lua
+IconController.disableHealthbar(bool)
+```
+Hides the fake healthbar (if currently visible) and prevents it becoming visible again (which normally occurs when the player takes damage).
+
+----
+
+
+
+## Properties
+#### mimicCoreGui
+```lua
+local bool = IconController.mimicCoreGui --[default: 'true']
+```
+Set to ``false`` to have the topbar persist even when ``game:GetService("StarterGui"):SetCore("TopbarEnabled", false)`` is called.
+
+----
+#### controllerModeEnabled
+{read-only}
+```lua
+local bool = IconController.controllerModeEnabled
+```
+
+----
+#### leftGap
+{read-only}
+```lua
+local gapNumber = IconController.leftGap --[default: '12']
+```
+
+----
+#### midGap
+{read-only}
+```lua
+local gapNumber = IconController.midGap --[default: '12']
+```
+
+----
+#### rightGap
+{read-only}
+```lua
+local gapNumber = IconController.rightGap --[default: '12']
+```
+
+----
+#### leftOffset
+{read-only}
+```lua
+local offset = IconController.leftGap --[default: '0']
+```
+
+----
+#### rightOffset
+{read-only}
+```lua
+local offset = IconController.rightGap --[default: '0']
+```
+--]]
+
+
+
 -- LOCAL
 local starterGui = game:GetService("StarterGui")
 local guiService = game:GetService("GuiService")
@@ -7,19 +150,43 @@ local userInputService = game:GetService("UserInputService")
 local tweenService = game:GetService("TweenService")
 local players = game:GetService("Players")
 local IconController = {}
+local replicatedStorage = game:GetService("ReplicatedStorage")
 local Signal = require(script.Parent.Signal)
 local TopbarPlusGui = require(script.Parent.TopbarPlusGui)
 local topbarIcons = {}
+local fakeChatName = "_FakeChat"
 local forceTopbarDisabled = false
 local menuOpen
 local topbarUpdating = false
 local STUPID_CONTROLLER_OFFSET = 32
+
+
+
+-- LOCAL FUNCTIONS
+local function checkTopbarEnabled()
+	local success, bool = xpcall(function()
+		return starterGui:GetCore("TopbarEnabled")
+	end,function(err)
+		--has not been registered yet, but default is that is enabled
+		return true	
+	end)
+	return (success and bool)
+end
+
+local function checkTopbarEnabledAccountingForMimic()
+	local topbarEnabledAccountingForMimic = (checkTopbarEnabled() or not IconController.mimicCoreGui)
+	return topbarEnabledAccountingForMimic
+end
+
+
+
+-- OFFSET HANDLERS
 local alignmentDetails = {}
 alignmentDetails["left"] = {
 	startScale = 0,
 	getOffset = function()
-		local offset = 48
-		if starterGui:GetCoreGuiEnabled("Chat") then
+		local offset = 48 + IconController.leftOffset
+		if checkTopbarEnabled() and starterGui:GetCoreGuiEnabled("Chat") then
 			offset += 12 + 32
 		end
 		return offset
@@ -36,7 +203,7 @@ alignmentDetails["mid"] = {
 	getOffset = function()
 		return 0
 	end,
-	getStartOffset = function(totalIconX)
+	getStartOffset = function(totalIconX) 
 		local alignmentGap = IconController["midGap"]
 		return -totalIconX/2 + (alignmentGap/2)
 	end,
@@ -45,8 +212,8 @@ alignmentDetails["mid"] = {
 alignmentDetails["right"] = {
 	startScale = 1,
 	getOffset = function()
-		local offset = 0
-		if starterGui:GetCoreGuiEnabled(Enum.CoreGuiType.PlayerList) or starterGui:GetCoreGuiEnabled(Enum.CoreGuiType.Backpack) or starterGui:GetCoreGuiEnabled(Enum.CoreGuiType.EmotesMenu) then
+		local offset = IconController.rightOffset
+		if checkTopbarEnabled() and (starterGui:GetCoreGuiEnabled(Enum.CoreGuiType.PlayerList) or starterGui:GetCoreGuiEnabled(Enum.CoreGuiType.Backpack) or starterGui:GetCoreGuiEnabled(Enum.CoreGuiType.EmotesMenu)) then
 			offset += 48
 		end
 		return offset
@@ -61,19 +228,6 @@ alignmentDetails["right"] = {
 
 
 
--- LOCAL METHODS
-local function checkTopbarEnabled()
-	local success, bool = xpcall(function()
-		return starterGui:GetCore("TopbarEnabled")
-	end,function(err)
-		--has not been registered yet, but default is that is enabled
-		return true	
-	end)
-	return (success and bool)
-end
-
-
-
 -- PROPERTIES
 IconController.topbarEnabled = true
 IconController.controllerModeEnabled = false
@@ -81,6 +235,10 @@ IconController.previousTopbarEnabled = checkTopbarEnabled()
 IconController.leftGap = 12
 IconController.midGap = 12
 IconController.rightGap = 12
+IconController.leftOffset = 0
+IconController.rightOffset = 0
+IconController.mimicCoreGui = true
+IconController.healthbarDisabled = false
 
 
 
@@ -89,6 +247,7 @@ IconController.iconAdded = Signal.new()
 IconController.iconRemoved = Signal.new()
 IconController.controllerModeStarted = Signal.new()
 IconController.controllerModeEnded = Signal.new()
+IconController.healthbarDisabledSignal = Signal.new()
 
 
 
@@ -100,8 +259,7 @@ IconController.iconAdded:Connect(function(icon)
 		icon:setTheme(IconController.gameTheme)
 	end
 	icon.updated:Connect(function()
-		local toggleTransitionInfo = icon:get("toggleTransitionInfo")
-		IconController.updateTopbar(toggleTransitionInfo)
+		IconController.updateTopbar()
 	end)
 	-- When this icon is selected, deselect other icons if necessary
 	icon.selected:Connect(function()
@@ -114,14 +272,13 @@ IconController.iconAdded:Connect(function(icon)
 	end)
 	-- Order by creation if no order specified
 	iconCreationCount = iconCreationCount + 1
-	if not icon._orderWasSet then
-		icon:setOrder(iconCreationCount)
-	end
+	icon:setOrder(iconCreationCount)
 	-- Apply controller view if enabled
 	if IconController.controllerModeEnabled then
 		IconController._enableControllerModeForIcon(icon, true)
 	end
 	IconController:_updateSelectionGroup()
+	IconController.updateTopbar()
 end)
 
 IconController.iconRemoved:Connect(function(icon)
@@ -166,6 +323,12 @@ function IconController.getIcon(name)
 	return false
 end
 
+function IconController.disableHealthbar(bool)
+	local finalBool = (bool == nil or bool)
+	IconController.healthbarDisabled = finalBool
+	IconController.healthbarDisabledSignal:Fire(finalBool)
+end
+
 function IconController.canShowIconOnTopbar(icon)
 	if (icon.enabled == true or icon.accountForWhenDisabled) and icon.presentOnTopbar then
 		return true
@@ -198,11 +361,12 @@ function IconController.getMenuOffset(icon)
 end
 
 -- This is responsible for positioning the topbar icons
-function IconController.updateTopbar(toggleTransitionInfo)
+local requestedTopbarUpdate = false
+function IconController.updateTopbar()
 	local function getIncrement(otherIcon, alignment)
 		--local container = otherIcon.instances.iconContainer
 		--local sizeX = container.Size.X.Offset
-		local iconSize = otherIcon:get("iconSize") or UDim2.new(0, 32, 0, 32)
+		local iconSize = otherIcon:get("iconSize", otherIcon:getIconState()) or UDim2.new(0, 32, 0, 32)
 		local sizeX = iconSize.X.Offset
 		local alignmentGap = IconController[alignment.."Gap"]
 		local iconWidthAndGap = (sizeX + alignmentGap)
@@ -216,6 +380,7 @@ function IconController.updateTopbar(toggleTransitionInfo)
 		return increment, preOffset
 	end
 	if topbarUpdating then -- This prevents the topbar updating and shifting icons more than it needs to
+		requestedTopbarUpdate = true
 		return false
 	end
 	coroutine.wrap(function()
@@ -262,8 +427,9 @@ function IconController.updateTopbar(toggleTransitionInfo)
 				local topPadding = otherIcon.topPadding
 				local newPositon = UDim2.new(alignmentInfo.startScale, offsetX+preOffset, topPadding.Scale, topPadding.Offset)
 				local isAnOverflowIcon = string.match(otherIcon.name, "_overflowIcon-")
-				if toggleTransitionInfo then
-					tweenService:Create(container, toggleTransitionInfo, {Position = newPositon}):Play()
+				local repositionInfo = otherIcon:get("repositionInfo")
+				if repositionInfo then
+					tweenService:Create(container, repositionInfo, {Position = newPositon}):Play()
 				else
 					container.Position = newPositon
 				end
@@ -277,7 +443,7 @@ function IconController.updateTopbar(toggleTransitionInfo)
 		local START_LEEWAY = 10 -- The additional offset where the end icon will be converted to ... without an apparant change in position
 		local function getBoundaryX(iconToCheck, side, gap)
 			local additionalGap = gap or 0
-			local currentSize = iconToCheck:get("iconSize")
+			local currentSize = iconToCheck:get("iconSize", iconToCheck:getIconState())
 			local sizeX = currentSize.X.Offset
 			local extendLeft, extendRight = IconController.getMenuOffset(iconToCheck)
 			local boundaryXOffset = (side == "left" and (-additionalGap-extendLeft)) or (side == "right" and sizeX+additionalGap+extendRight)
@@ -285,7 +451,12 @@ function IconController.updateTopbar(toggleTransitionInfo)
 			return boundaryX
 		end
 		local function getSizeX(iconToCheck, usePrevious)
-			local currentSize, previousSize = iconToCheck:get("iconSize", nil, "beforeDropdown")
+			local currentSize, previousSize = iconToCheck:get("iconSize", iconToCheck:getIconState(), "beforeDropdown")
+			local hoveringSize = iconToCheck:get("iconSize", "hovering")
+			if iconToCheck.wasHoveringBeforeOverflow and previousSize and hoveringSize and hoveringSize.X.Offset > previousSize.X.Offset then
+				-- This prevents hovering icons flicking back and forth, demonstrated at thread/1017485/191.
+				previousSize = hoveringSize
+			end
 			local newSize = (usePrevious and previousSize) or currentSize
 			local extendLeft, extendRight = IconController.getMenuOffset(iconToCheck)
 			local sizeX = newSize.X.Offset + extendLeft + extendRight
@@ -322,7 +493,7 @@ function IconController.updateTopbar(toggleTransitionInfo)
 						local endIcon = recordToCheck[totalIcons+1 - i]
 						if IconController.canShowIconOnTopbar(endIcon) then
 							local isAnOverflowIcon = string.match(endIcon.name, "_overflowIcon-")
-							if isAnOverflowIcon and totalIcons ~= 1 then --!!!
+							if isAnOverflowIcon and totalIcons ~= 1 then
 								break
 							elseif isAnOverflowIcon and not endIcon.enabled then
 								continue
@@ -353,7 +524,7 @@ function IconController.updateTopbar(toggleTransitionInfo)
 						local endIcon = (alignment == "left" and recordToCheck[totalIcons+1 - i]) or (alignment == "right" and recordToCheck[i])
 						if endIcon ~= overflowIcon and IconController.canShowIconOnTopbar(endIcon) then
 							local additionalGap = alignmentGap
-							local overflowIconSizeX = overflowIcon:get("iconSize").X.Offset
+							local overflowIconSizeX = overflowIcon:get("iconSize", overflowIcon:getIconState()).X.Offset
 							if overflowIcon.enabled then
 								additionalGap += alignmentGap + overflowIconSizeX
 							end
@@ -384,6 +555,9 @@ function IconController.updateTopbar(toggleTransitionInfo)
 										endIcon:select()
 									end
 								end
+								if endIcon.hovering then
+									endIcon.wasHoveringBeforeOverflow = true
+								end
 								endIcon:join(overflowIcon, "dropdown")
 								if #endIcon.menuIcons > 0 and endIcon.menuOpen then
 									endIcon:deselect()
@@ -400,7 +574,7 @@ function IconController.updateTopbar(toggleTransitionInfo)
 					-- This checks to see if the lowest/highest (depending on left/right) ordered overlapping icon is no longer overlapping, removes from the dropdown, and repeats if valid
 					local winningOrder, winningOverlappedIcon
 					local totalOverlappingIcons = #overflowIcon.dropdownIcons
-					if not (oppositeOverflowIcon.enabled and #alignmentInfo.records == 1 and #oppositeAlignmentInfo.records ~= 1) then
+					if not (oppositeOverflowIcon and oppositeOverflowIcon.enabled and #alignmentInfo.records == 1 and #oppositeAlignmentInfo.records ~= 1) then
 						for _, overlappedIcon in pairs(overflowIcon.dropdownIcons) do
 							local iconOrder = overlappedIcon:get("order")
 							if winningOverlappedIcon == nil or (alignment == "left" and iconOrder < winningOrder) or (alignment == "right" and iconOrder > winningOrder) then
@@ -425,6 +599,7 @@ function IconController.updateTopbar(toggleTransitionInfo)
 							local yPos = overflowContainer.Position.Y
 							overflowContainer.Position = UDim2.new(0, myForesightBoundaryX, yPos.Scale, yPos.Offset)
 							winningOverlappedIcon:leave()
+							winningOverlappedIcon.wasHoveringBeforeOverflow = nil
 							--
 							if winningOverlappedIcon._overflowConvertedToMenu then
 								winningOverlappedIcon._overflowConvertedToMenu = nil
@@ -445,6 +620,10 @@ function IconController.updateTopbar(toggleTransitionInfo)
 			end
 		end
 		--------
+		if requestedTopbarUpdate then
+			requestedTopbarUpdate = false
+			IconController.updateTopbar()
+		end
 		return true
 	end)()
 end
@@ -459,11 +638,12 @@ function IconController.setTopbarEnabled(bool, forceBool)
 	elseif forceBool and bool then
 		forceTopbarDisabled = false
 	end
+	local topbarEnabledAccountingForMimic = checkTopbarEnabledAccountingForMimic()
 	if IconController.controllerModeEnabled then
 		if bool then
-			if TopbarPlusGui.TopbarContainer.Visible or forceTopbarDisabled or menuOpen or not checkTopbarEnabled() then return end
+			if TopbarPlusGui.TopbarContainer.Visible or forceTopbarDisabled or menuOpen or not topbarEnabledAccountingForMimic then return end
 			if forceBool then
-				indicator.Visible = checkTopbarEnabled()
+				indicator.Visible = topbarEnabledAccountingForMimic
 			else
 				if hapticService:IsVibrationSupported(Enum.UserInputType.Gamepad1) and hapticService:IsMotorSupported(Enum.UserInputType.Gamepad1,Enum.VibrationMotor.Small) then
 					hapticService:SetMotor(Enum.UserInputType.Gamepad1,Enum.VibrationMotor.Small,1)
@@ -519,7 +699,7 @@ function IconController.setTopbarEnabled(bool, forceBool)
 			if forceBool then
 				indicator.Visible = false
 			else
-				indicator.Visible = checkTopbarEnabled()
+				indicator.Visible = topbarEnabledAccountingForMimic
 			end
 			if not TopbarPlusGui.TopbarContainer.Visible then return end
 			guiService.AutoSelectGuiEnabled = true
@@ -545,7 +725,7 @@ function IconController.setTopbarEnabled(bool, forceBool)
 		end
 	else
 		local topbarContainer = TopbarPlusGui.TopbarContainer
-		if checkTopbarEnabled() then
+		if topbarEnabledAccountingForMimic then
 			topbarContainer.Visible = bool
 		else
 			topbarContainer.Visible = false
@@ -558,12 +738,38 @@ function IconController.setGap(value, alignment)
 	local newAlignment = tostring(alignment):lower()
 	if newAlignment == "left" or newAlignment == "mid" or newAlignment == "right" then
 		IconController[newAlignment.."Gap"] = newValue
+		IconController.updateTopbar()
 		return
 	end
 	IconController.leftGap = newValue
 	IconController.midGap = newValue
 	IconController.rightGap = newValue
 	IconController.updateTopbar()
+end
+
+function IconController.setLeftOffset(value)
+	IconController.leftOffset = tonumber(value) or 0
+	IconController.updateTopbar()
+end
+
+function IconController.setRightOffset(value)
+	IconController.rightOffset = tonumber(value) or 0
+	IconController.updateTopbar()
+end
+
+local localPlayer = players.LocalPlayer
+local iconsToClearOnSpawn = {}
+localPlayer.CharacterAdded:Connect(function()
+	for _, icon in pairs(iconsToClearOnSpawn) do
+		icon:destroy()
+	end
+	iconsToClearOnSpawn = {}
+end)
+function IconController.clearIconOnSpawn(icon)
+	coroutine.wrap(function()
+		local char = localPlayer.Character or localPlayer.CharacterAdded:Wait()
+		table.insert(iconsToClearOnSpawn, icon)
+	end)()
 end
 
 
@@ -631,11 +837,11 @@ function IconController._enableControllerMode(bool)
 		indicator.Position = UDim2.new(0.5,0,0,5)
 		indicator.Size = UDim2.new(0, 18*scaleMultiplier, 0, 18*scaleMultiplier)
 		indicator.Image = "rbxassetid://5278151556"
-		indicator.Visible = checkTopbarEnabled()
+		indicator.Visible = checkTopbarEnabledAccountingForMimic()
 		indicator.Position = UDim2.new(0.5,0,0,5)
 	else
 		TopbarPlusGui.TopbarContainer.Position = UDim2.new(0,0,0,0)
-		TopbarPlusGui.TopbarContainer.Visible = checkTopbarEnabled()
+		TopbarPlusGui.TopbarContainer.Visible = checkTopbarEnabledAccountingForMimic()
 		indicator.Visible = false
 		IconController._setControllerSelectedObject(nil)
 	end
@@ -654,26 +860,167 @@ function IconController._enableControllerModeForIcon(icon, bool)
 		local scaleMultiplier = getScaleMultiplier()
 		local currentSizeDeselected = icon:get("iconSize", "deselected")
 		local currentSizeSelected = icon:get("iconSize", "selected")
+		local currentSizeHovering = icon:getHovering("iconSize")
 		icon:set("iconSize", UDim2.new(0, currentSizeDeselected.X.Offset*scaleMultiplier, 0, currentSizeDeselected.Y.Offset*scaleMultiplier), "deselected", "controllerMode")
 		icon:set("iconSize", UDim2.new(0, currentSizeSelected.X.Offset*scaleMultiplier, 0, currentSizeSelected.Y.Offset*scaleMultiplier), "selected", "controllerMode")
+		if currentSizeHovering then
+			icon:set("iconSize", UDim2.new(0, currentSizeSelected.X.Offset*scaleMultiplier, 0, currentSizeSelected.Y.Offset*scaleMultiplier), "hovering", "controllerMode")
+		end
 		icon:set("alignment", "mid", "deselected", "controllerMode")
 		icon:set("alignment", "mid", "selected", "controllerMode")
 	else
-		local states = {"deselected", "selected"}
-		for _, toggleState in pairs(states) do
-			local _, previousAlignment = icon:get("alignment", toggleState, "controllerMode")
+		local states = {"deselected", "selected", "hovering"}
+		for _, iconState in pairs(states) do
+			local _, previousAlignment = icon:get("alignment", iconState, "controllerMode")
 			if previousAlignment then
-				icon:set("alignment", previousAlignment, toggleState)
+				icon:set("alignment", previousAlignment, iconState)
 			end
-			local currentSize, previousSize = icon:get("iconSize", toggleState, "controllerMode")
+			local currentSize, previousSize = icon:get("iconSize", iconState, "controllerMode")
 			if previousSize then
-				icon:set("iconSize", previousSize, toggleState)
+				icon:set("iconSize", previousSize, iconState)
 			end
 		end
 	end
 	if parentIcon then
 		icon:join(parentIcon, featureName)
 	end
+end
+
+local createdFakeHealthbarIcon = false
+function IconController.setupHealthbar()
+
+	if createdFakeHealthbarIcon then
+		return
+	end
+	createdFakeHealthbarIcon = true
+
+	-- Create a fake healthbar icon to mimic the core health gui
+	task.defer(function()
+		runService.Heartbeat:Wait()
+		local Icon = require(script.Parent)
+
+		Icon.new()
+			:setProperty("internalIcon", true)
+			:setName("_FakeHealthbar")
+			:setRight()
+			:setOrder(-420)
+			:setSize(80, 32)
+			:lock()
+			:set("iconBackgroundTransparency", 1)
+			:give(function(icon)
+
+				local healthContainer = Instance.new("Frame")
+				healthContainer.Name = "HealthContainer"
+				healthContainer.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+				healthContainer.BorderSizePixel = 0
+				healthContainer.AnchorPoint = Vector2.new(0, 0.5)
+				healthContainer.Position = UDim2.new(0, 0, 0.5, 0)
+				healthContainer.Size = UDim2.new(1, 0, 0.2, 0)
+				healthContainer.Visible = true
+				healthContainer.ZIndex = 11
+				print("icon = ", icon)
+				print("icon.instances = ", icon.instances)
+				print("icon.instances.iconButton = ", icon.instances.iconButton)
+				healthContainer.Parent = icon.instances.iconButton
+
+				local corner = Instance.new("UICorner")
+				corner.CornerRadius = UDim.new(1, 0)
+				corner.Parent = healthContainer
+
+				local healthFrame = healthContainer:Clone()
+				healthFrame.Name = "HealthFrame"
+				healthFrame.BackgroundColor3 = Color3.fromRGB(167, 167, 167)
+				healthFrame.BorderSizePixel = 0
+				healthFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+				healthFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+				healthFrame.Size = UDim2.new(1, -2, 1, -2)
+				healthFrame.Visible = true
+				healthFrame.ZIndex = 12
+				healthFrame.Parent = healthContainer
+
+				local healthBar = healthFrame:Clone()
+				healthBar.Name = "HealthBar"
+				healthBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				healthBar.BorderSizePixel = 0
+				healthBar.AnchorPoint = Vector2.new(0, 0.5)
+				healthBar.Position = UDim2.new(0, 0, 0.5, 0)
+				healthBar.Size = UDim2.new(0.5, 0, 1, 0)
+				healthBar.Visible = true
+				healthBar.ZIndex = 13
+				healthBar.Parent = healthFrame
+
+				local START_HEALTHBAR_COLOR = Color3.fromRGB(27, 252, 107)
+				local MID_HEALTHBAR_COLOR = Color3.fromRGB(250, 235, 0)
+				local END_HEALTHBAR_COLOR = Color3.fromRGB(255, 28, 0)
+
+				local function powColor3(color, pow)
+					return Color3.new(
+						math.pow(color.R, pow),
+						math.pow(color.G, pow),
+						math.pow(color.B, pow)
+					)
+				end
+
+				local function lerpColor(colorA, colorB, frac, gamma)
+					gamma = gamma or 2.0
+					local CA = powColor3(colorA, gamma)
+					local CB = powColor3(colorB, gamma)
+					return powColor3(CA:Lerp(CB, frac), 1/gamma)
+				end
+
+				local firstTimeEnabling = true
+				local function listenToHealth(character)
+					if not character then
+						return
+					end
+					local humanoid = character:WaitForChild("Humanoid", 10)
+					if not humanoid then
+						return
+					end
+
+					local function updateHealthBar()
+						local realHealthbarEnabled = starterGui:GetCoreGuiEnabled(Enum.CoreGuiType.Health)
+						local healthInterval = humanoid.Health / humanoid.MaxHealth
+						if healthInterval == 1 or IconController.healthbarDisabled or (firstTimeEnabling and realHealthbarEnabled == false) then
+							if icon.enabled then
+								icon:setEnabled(false)
+							end
+							return
+						elseif healthInterval < 1 then
+							if not icon.enabled then
+								icon:setEnabled(true)
+							end
+							firstTimeEnabling = false
+							if realHealthbarEnabled then
+								starterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Health, false)
+							end
+						end
+						local startInterval = 0.9
+						local endInterval = 0.1
+						local m = 1/(startInterval - endInterval)
+						local c = -m*endInterval
+						local colorIntervalAbsolute = (m*healthInterval) + c
+						local colorInterval = (colorIntervalAbsolute > 1 and 1) or (colorIntervalAbsolute < 0 and 0) or colorIntervalAbsolute
+						local firstColor = (healthInterval > 0.5 and START_HEALTHBAR_COLOR) or MID_HEALTHBAR_COLOR
+						local lastColor = (healthInterval > 0.5 and MID_HEALTHBAR_COLOR) or END_HEALTHBAR_COLOR
+						local doubleSubtractor = (1-colorInterval)*2
+						local modifiedColorInterval = (healthInterval > 0.5 and (1-doubleSubtractor)) or (2-doubleSubtractor)
+						local newHealthFillColor = lerpColor(lastColor, firstColor, modifiedColorInterval)
+						local newHealthFillSize = UDim2.new(healthInterval, 0, 1, 0)
+						healthBar.BackgroundColor3 = newHealthFillColor
+						healthBar.Size = newHealthFillSize
+					end
+
+					humanoid.HealthChanged:Connect(updateHealthBar)
+					IconController.healthbarDisabledSignal:Connect(updateHealthBar)
+					updateHealthBar()
+				end
+				localPlayer.CharacterAdded:Connect(function(character)
+					listenToHealth(character)
+				end)
+				task.spawn(listenToHealth, localPlayer.Character)
+			end)
+	end)
 end
 
 
@@ -684,15 +1031,16 @@ coroutine.wrap(function()
 	
 	-- Create PC 'Enter Controller Mode' Icon
 	runService.Heartbeat:Wait() -- This is required to prevent an infinite recursion
-	local Icon = require(script.Parent).default
+	local Icon = require(script.Parent)
 	local controllerOptionIcon = Icon.new()
+		:setProperty("internalIcon", true)
 		:setName("_TopbarControllerOption")
 		:setOrder(100)
 		:setImage("rbxassetid://5278150942")
 		:setRight()
 		:setEnabled(false)
 		:setTip("Controller mode")
-	controllerOptionIcon.deselectWhenOtherIconSelected = false
+		:setProperty("deselectWhenOtherIconSelected", false)
 
 	-- This decides what controller widgets and displays to show based upon their connected inputs
 	-- For example, if on PC with a controller, give the player the option to enable controller mode with a toggle
@@ -734,7 +1082,7 @@ coroutine.wrap(function()
 	userInputService.InputBegan:Connect(function(input,gpe)
 		if not IconController.controllerModeEnabled then return end
 		if input.KeyCode == Enum.KeyCode.DPadDown then
-			if not guiService.SelectedObject and checkTopbarEnabled() then
+			if not guiService.SelectedObject and checkTopbarEnabledAccountingForMimic() then
 				IconController.setTopbarEnabled(true,false)
 			end
 		elseif input.KeyCode == Enum.KeyCode.ButtonB then
@@ -750,6 +1098,7 @@ coroutine.wrap(function()
 		if alignment ~= "mid" then
 			local overflowName = "_overflowIcon-"..alignment
 			local overflowIcon = Icon.new()
+				:setProperty("internalIcon", true)
 				:setImage(6069276526)
 				:setName(overflowName)
 				:setEnabled(false)
@@ -764,29 +1113,43 @@ coroutine.wrap(function()
 				overflowIcon:setRight()
 				overflowIcon:set("dropdownAlignment", "left")
 			end
+			overflowIcon.lockedSettings = {
+				["iconImage"] = true,
+				["order"] = true,
+				["alignment"] = true,
+			}
 		end
 	end
 end)()
 
 -- Mimic the enabling of the topbar when StarterGui:SetCore("TopbarEnabled", state) is called
 coroutine.wrap(function()
-	local ChatMain = require(players.LocalPlayer.PlayerScripts:WaitForChild("ChatScript", 90).ChatMain)
+	local chatScript = players.LocalPlayer.PlayerScripts:WaitForChild("ChatScript", 4) or game:GetService("Chat"):WaitForChild("ChatScript", 4)
+	if not chatScript then return end
+	local chatMain = chatScript:FindFirstChild("ChatMain")
+	if not chatMain then return end
+	local ChatMain = require(chatMain)
 	ChatMain.CoreGuiEnabled:connect(function()
 		local topbarEnabled = checkTopbarEnabled()
 		if topbarEnabled == IconController.previousTopbarEnabled then
 			IconController.updateTopbar()
 			return "SetCoreGuiEnabled was called instead of SetCore"
 		end
-		IconController.previousTopbarEnabled = topbarEnabled
-		if IconController.controllerModeEnabled then
-			IconController.setTopbarEnabled(false,false)
-		else
-			IconController.setTopbarEnabled(topbarEnabled,false)
+		if IconController.mimicCoreGui then
+			IconController.previousTopbarEnabled = topbarEnabled
+			if IconController.controllerModeEnabled then
+				IconController.setTopbarEnabled(false,false)
+			else
+				IconController.setTopbarEnabled(topbarEnabled,false)
+			end
 		end
 		IconController.updateTopbar()
 	end)
-	IconController.setTopbarEnabled(checkTopbarEnabled(),false)
-	
+	local makeVisible = checkTopbarEnabled()
+	if not makeVisible and not IconController.mimicCoreGui then
+		makeVisible = true
+	end
+	IconController.setTopbarEnabled(makeVisible, false)
 end)()
 
 -- Mimic roblox menu when opened and closed

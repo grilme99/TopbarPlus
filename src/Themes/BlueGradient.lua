@@ -3,11 +3,13 @@ local selectedColor = Color3.fromRGB(0, 170, 255)
 local selectedColorDarker = Color3.fromRGB(0, 120, 180)
 local neutralColor = Color3.fromRGB(255, 255, 255)
 return {
+    
     -- Settings which describe how an item behaves or transitions between states
     action =  {
-        --toggleTransitionInfo = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        resizeInfo = TweenInfo.new(0.2, Enum.EasingStyle.Back),
+        repositionInfo = TweenInfo.new(0.2, Enum.EasingStyle.Back),
     },
-
+    
     -- Settings which describe how an item appears when 'deselected' and 'selected'
     toggleable = {
         -- How items appear normally (i.e. when they're 'deselected')
@@ -26,12 +28,14 @@ return {
             iconBackgroundTransparency = 0.1,
             iconGradientColor = ColorSequence.new(selectedColor, selectedColorDarker),
             iconGradientRotation = 90,
-            iconImageColor =Color3.fromRGB(255, 255, 255),
+            iconImageColor = Color3.fromRGB(255, 255, 255),
             iconTextColor = Color3.fromRGB(255, 255, 255),
             noticeCircleColor = neutralColor,
             noticeTextColor = selectedColor,
         }
     },
+    
     -- Settings where toggleState doesn't matter (they have a singular state)
     other =  {},
+    
 }

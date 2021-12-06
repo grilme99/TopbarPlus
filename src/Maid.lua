@@ -94,12 +94,15 @@ function Maid:givePromise(promise)
 	if (promise:getStatus() ~= Promise.Status.Started) then
 		return promise
 	end
+
 	local newPromise = Promise.resolve(promise)
 	local id = self:giveTask(newPromise)
+
 	-- Ensure GC
 	newPromise:finally(function()
 		self[id] = nil
 	end)
+
 	return newPromise, id
 end--]]
 
